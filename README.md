@@ -103,5 +103,3 @@ Forecasting and DCF outputs depend on assumptions. Historical data and report au
 **Tanvi Gajula**
 
 GitHub: https://github.com/Tanvi-Gajula
-
-*Developed as a personal learning project with AI-assisted coding.*
