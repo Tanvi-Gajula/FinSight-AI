@@ -32,6 +32,8 @@ class Assumptions:
  terminal_growth:float=.04
  n:int=3
  min_cash:float=0.0
+ shares:float|None=None  # actual shares, not crore shares
+ market_price:float|None=None  # INR/share; user verified
 
 
 def extract(df, account, year):
@@ -228,6 +230,33 @@ def workbook(ticker, frames, assumptions):
     sources.append(['Historical CF cash versus BS cash','Definitions differ; explicit open review item'])
     sources.append(['Forecast equity','Total equity (incl. minority interests) increases by net income less dividends; simplifying assumption'])
     sources.append(['Model purpose','Educational scenario model; not audited, no investment recommendation'])
+    # Per-share stock valuation. Never guess shares or a live market quote.
+    stock=wb.create_sheet('Stock Valuation')
+    stock.append(['FINSIGHT | STOCK VALUATION','Value','Notes'])
+    stock.append(['Company ticker',ticker,'Confirm quote/share class against reporting entity'])
+    stock.append(['Enterprise value (INR crore)', '=DCF!B12', 'Scenario-based FCFF DCF'])
+    stock.append(['Equity value (INR crore)', '=DCF!B15', 'EV - model debt + model cash; simplifying assumption'])
+    stock.append(['Diluted shares (actual shares)',assumptions.shares,'Required: latest diluted shares, not in crores'])
+    stock.append(['Model value per share (INR)', '=IF(OR(NOT(ISNUMBER(B5)),B5<=0),"",B4*10000000/B5)', 'Only if source/reporting currency is independently verified as INR'])
+    stock.append(['Market share price (INR)',assumptions.market_price,'User-supplied quote; verify date and share class'])
+    stock.append(['Model difference vs price','=IF(OR(NOT(ISNUMBER(B6)),NOT(ISNUMBER(B7)),B7<=0),"",B6/B7-1)','Not a trade recommendation'])
+    stock.append(['Result status','=IF(OR(NOT(ISNUMBER(B5)),B5<=0,NOT(ISNUMBER(B7)),B7<=0),"INPUTS MISSING","ILLUSTRATIVE — SOURCE REVIEW")'])
+    stock.append(['WACC sensitivity / terminal growth','-1%','Base','+1%'])
+    for i, delta in enumerate((-.01,0,.01),2):stock.cell(11,i,f'=DCF!B4{delta:+.2f}')
+    for j, delta in enumerate((-.01,0,.01),12):
+        stock.cell(j,1,f'=DCF!B3{delta:+.2f}')
+        for i in (2,3,4):
+            col=get_column_letter(i)
+            pv='+'.join(f'DCF!{get_column_letter(k+1)}6/(1+$A{j})^{k}' for k in range(1,len(f)+1))
+            last_col=get_column_letter(len(f)+1)
+            expr=f'{pv}+(DCF!{last_col}6*(1+{col}$11)/($A{j}-{col}$11))/(1+$A{j})^{len(f)}-DCF!B13+DCF!B14'
+            stock.cell(j,i,f'=IF(OR(NOT(ISNUMBER($B$5)),$B$5<=0,$A{j}<={col}$11),"",({expr})*10000000/$B$5)')
+    stock['B8'].number_format='0.00%'
+    for c in stock[11][1:4]:c.number_format='0.0%'
+    for j in range(12,15):stock.cell(j,1).number_format='0.0%'
+    stock.column_dimensions['C'].width=80
+    sources.append(['Stock valuation','Per-share values only when the user supplies verified diluted shares and market price'])
+    sources.append(['Market price freshness','User-supplied; quote timestamp not fetched automatically'])
     for sheet in wb:
         sheet.freeze_panes='B2';sheet.column_dimensions['A'].width=44
         for ci in range(2,max(sheet.max_column+1,7)):sheet.column_dimensions[get_column_letter(ci)].width=22

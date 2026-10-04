@@ -130,19 +130,58 @@ def agent_answer(question, frames_by_ticker, enabled=True, report_evidence=None)
                 msgs.append(ToolMessage(content=output,tool_call_id=call['id']))
         return deterministic_answer(question,frames_by_ticker),used
     except Exception as exc:
-        return deterministic_answer(question,frames_by_ticker)+f'\n\n*AI unavailable ({type(exc).__name__}); showing numerical data instead.*',[]
+        return deterministic_answer(question,frames_by_ticker)+f'\n\n*Groq unavailable ({type(exc).__name__}). Check Streamlit Secrets, revoked key, account permissions and configured model. Local calculation shown instead.*',[]
 
 def deterministic_answer(question,frames_by_ticker):
-    parts=[]
-    for t,frames in frames_by_ticker.items():
-        d=math_results(t,frames); hist=d['historical']
-        if not hist: continue
-        if any(token in question.casefold() for token in ('why','reason','cause','driver','declin','drop','increase','slow','margin')):
-            parts.append(format_investigation(investigate(t,frames)))
-            continue
-        lines=[f"**{t}** (Yahoo Finance extracted data, unaudited)"]
-        for x in hist[-4:]:
-            r=x['revenue_raw'];n=x['net_income_raw']; g=x.get('revenue_growth_pct');m=x['net_margin_pct']
-            lines.append(f"- FY{x['year']}: revenue {r:,.0f} raw units"+(f", growth {g:.2f}%" if g is not None else '')+(f", net margin {m:.2f}%" if m is not None else ''))
-        parts.append('\n'.join(lines))
-    return '\n\n'.join(parts)+'\n\n*For conversational account-level answers, enable Groq. Values are in source reporting-currency units.*'
+    """Question-aware, non-LLM answers. Never claim an unsupported valuation."""
+    q=question.casefold()
+    if not frames_by_ticker:
+        return 'Load a company in the sidebar first.'
+    t=next(iter(frames_by_ticker))
+    frames=frames_by_ticker[t]
+    def account(kind, label):
+        d=frames.get(kind)
+        if d is None or d.empty or label not in d.index:return None
+        for date in sorted(d.columns,key=lambda x:pd.Timestamp(x),reverse=True):
+            value=d.loc[label,date]
+            if not isinstance(value,pd.Series) and pd.notna(value):
+                return pd.Timestamp(date).year,float(value)
+        return None
+    footer='\n\n*Source: Yahoo Finance provider extraction; reporting currency and figures are not independently verified.*'
+    if any(word in q for word in ('valuat','fair value','intrinsic','stock price','dcf')):
+        return (f'**{t}: stock valuation requires the modeling engine**, not a revenue summary. '
+                'Open **📈 Model & download**, supply verified diluted shares and the market price, '
+                'and generate the workbook. This produces a scenario-based DCF, not a buy/sell signal.'+footer)
+    if any(word in q for word in ('missing','unavailable','coverage','complete','absent')):
+        from model import SOURCE_MAP
+        gaps=[]
+        for kind,df in frames.items():
+            if df is None or df.empty:
+                gaps.append(f'{kind}: entire statement unavailable')
+        for name,(kind,label) in SOURCE_MAP.items():
+            if account(kind,label) is None:gaps.append(f'{kind} → {label}')
+        return ('**Missing or unavailable model inputs for '+t+':**\n'+
+                ('\n'.join('- '+x for x in gaps) if gaps else 'No missing standard model accounts detected. This does not establish data accuracy.')+footer)
+    if any(word in q for word in ('operating cash','cash flow','cashflow','free cash','investing cash','financing cash')):
+        lines=[]
+        for label in ('Operating Cash Flow','Investing Cash Flow','Financing Cash Flow','Free Cash Flow','Capital Expenditure'):
+            x=account('CashFlow',label)
+            if x:lines.append(f'- {label} (FY{x[0]}): {x[1]:,.0f} raw reporting-currency units')
+        if not lines:return 'Cash flow accounts are unavailable in the loaded source.'+footer
+        return (f'**{t}: latest available cash flow figures**\n'+ '\n'.join(lines)+
+            '\n\nOperating cash flow reflects cash generated or used by operating activities; it is not the same as net income.'+footer)
+    if any(word in q for word in ('debt','balance sheet','assets','liabilities','equity')):
+        lines=[]
+        for label in ('Total Assets','Total Liabilities Net Minority Interest','Total Equity Gross Minority Interest','Total Debt'):
+            x=account('Balance',label)
+            if x:lines.append(f'- {label} (FY{x[0]}): {x[1]:,.0f} raw units')
+        return f'**{t}: Balance Sheet**\n'+'\n'.join(lines)+footer
+    if any(word in q for word in ('why','reason','cause','driver','declin','drop','increase','slow','margin')):
+        return format_investigation(investigate(t,frames))+footer
+    d=math_results(t,frames);hist=d['historical']
+    if not hist:return f'Historical revenue data is unavailable for {t}.'+footer
+    lines=[f'**{t}: revenue history**']
+    for x in hist[-4:]:
+        r=x['revenue_raw'];g=x.get('revenue_growth_pct');m=x.get('net_margin_pct')
+        lines.append(f'- FY{x["year"]}: revenue {r:,.0f} raw units'+(f', growth {g:.2f}%' if g is not None else '')+(f', net margin {m:.2f}%' if m is not None else ''))
+    return '\n'.join(lines)+footer

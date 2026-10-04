@@ -35,9 +35,9 @@ def fetch(ticker,demo):
     return result
 
 @st.cache_data(ttl=3600,show_spinner=False)
-def build(ticker,demo,growth,wacc,terminal,years,min_cash):
+def build(ticker,demo,growth,wacc,terminal,years,min_cash,shares,market_price):
     frames=fetch(ticker,demo)
-    return workbook(ticker,frames,Assumptions(growth,wacc,terminal,years,min_cash))
+    return workbook(ticker,frames,Assumptions(growth,wacc,terminal,years,min_cash,shares,market_price))
 
 if 'companies' not in st.session_state:st.session_state.companies={}
 if 'messages' not in st.session_state:st.session_state.messages=[]
@@ -257,6 +257,10 @@ with tab_model:
         wacc=c1.slider('WACC (%)',2.,30.,11.,.1)/100
         terminal=c2.slider('Terminal growth (%)',-2.,8.,4.,.1)/100
         min_cash=st.number_input('Minimum cash, in model currency crore-equivalent',min_value=0.,value=0.,step=100.)
+        st.markdown('##### 📍 Stock Valuation Lab')
+        shares_input=st.number_input('Verified diluted shares outstanding (actual shares; 0 if unknown)',min_value=0.,value=0.,step=1000000.,format='%.0f')
+        price_input=st.number_input('Verified market price per share (INR; 0 if unknown)',min_value=0.,value=0.,step=1.)
+        st.caption('Confirm reporting currency, share count, share class, and quote date. If missing, workbook leaves per-share result blank.')
         if st.button('✨ Create my Excel model',type='primary'):
             if active.upper().startswith(('HDFCBANK','ICICIBANK','SBIN','AXISBANK')):st.warning('Banks require a bank-specific valuation model. Research and chat remain available.')
             elif not active.endswith('.NS'):st.warning('Current model assumes INR crore; international tickers are supported for research, not the current modeling currency convention.')
@@ -264,12 +268,17 @@ with tab_model:
             try:
                 if not active.endswith('.NS'):raise ValueError('Forecast model is INR-specific; other tickers are research-only until currency handling is extended.')
                 with st.spinner('Building and validating model...'):
-                    binary,h,forecast,val,checks=build(active,st.session_state.companies[active]['demo'],growth,wacc,terminal,years,min_cash)
+                    binary,h,forecast,val,checks=build(active,st.session_state.companies[active]['demo'],growth,wacc,terminal,years,min_cash,shares_input or None,price_input or None)
                 st.session_state.report={'ticker':active,'file':binary,'forecast':forecast,'value':val,'checks':checks}
             except Exception as exc:st.warning(f'Model unavailable for {active}: {exc}. Financial research and agent chat still work.')
         report=st.session_state.get('report')
         if report and report['ticker']==active:
             st.metric('Illustrative enterprise value (₹ crore)',f"{report['value']['enterprise_value']:,.0f}")
+            if shares_input>0:
+                per_share=report['value']['equity_value']*10000000/shares_input
+                st.metric('Illustrative intrinsic value / share (₹)',f'{per_share:,.2f}')
+                if price_input>0:st.metric('Model difference vs user-entered price',f'{100*(per_share/price_input-1):+.1f}%')
+            else:st.info('Enter verified diluted shares above to calculate value per share. Otherwise use the workbook for an illustrative company-level valuation.')
             st.dataframe(pd.DataFrame(report['forecast']),use_container_width=True)
             st.dataframe(pd.DataFrame(report['checks']),use_container_width=True)
             st.download_button('⬇ Download my Excel model',report['file'],file_name=f'FinSight_{active.replace(".","_")}_Model.xlsx',mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',type='primary')
