@@ -102,3 +102,8 @@ table, th, td {
 * {
     text-shadow: none !important;
 }
+/* Hide Streamlit toolbar */
+[data-testid="stToolbar"],
+[data-testid="stAppDeployButton"] {
+    display: none !important;
+}
