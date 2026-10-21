@@ -1,24 +1,5 @@
-# Private credentials
 .env
-.env.*
-!.env.example
 .streamlit/secrets.toml
-
-# Virtual environment
-.venv/
-venv/
-
-# Python temporary files
 __pycache__/
 *.pyc
-.pytest_cache/
-
-# Generated financial reports
-output/
-*.log
-
-# IDE and operating system files
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
+.venv/
