@@ -1,109 +1,16 @@
-/* =========================
-   FINSIGHT VISIBILITY FIX
-   ========================= */
-
-/* Base text colors */
-html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
-    color: #2b2440 !important;
-    background-color: #fcf8ff !important;
-}
-
-/* Headings */
-h1, h2, h3, h4, h5, h6 {
-    color: #2d2352 !important;
-}
-
-/* Normal text */
-p, li, span, div, label, small {
-    color: #4a4268 !important;
-    opacity: 1 !important;
-}
-
-/* Captions / helper text */
-[data-testid="stCaptionContainer"],
-[data-testid="stMarkdownContainer"] p,
-[data-testid="stText"] {
-    color: #5b5475 !important;
-    opacity: 1 !important;
-}
-
-/* Tabs */
-button[data-baseweb="tab"] {
-    color: #5b5475 !important;
-    background: transparent !important;
-    opacity: 1 !important;
-    font-weight: 600 !important;
-}
-
-button[data-baseweb="tab"][aria-selected="true"] {
-    color: #2d2352 !important;
-    border-bottom: 3px solid #f16f8a !important;
-    background-color: #f8f2ff !important;
-    border-radius: 10px 10px 0 0 !important;
-}
-
-button[data-baseweb="tab"]:hover {
-    color: #2d2352 !important;
-    background-color: #f4edff !important;
-}
-
-/* Radio buttons / statement selectors */
-[data-testid="stRadio"] label,
-[role="radiogroup"] label {
-    color: #2d2352 !important;
-    opacity: 1 !important;
-    font-weight: 600 !important;
-}
-
-/* Input labels */
-label, .stSelectbox label, .stTextInput label, .stNumberInput label, .stSlider label {
-    color: #2d2352 !important;
-    opacity: 1 !important;
-    font-weight: 600 !important;
-}
-
-/* Buttons */
-.stButton button {
-    color: white !important;
-    background: linear-gradient(90deg, #9b7bff, #f38fb2) !important;
-    border: none !important;
-    border-radius: 12px !important;
-    font-weight: 600 !important;
-}
-
-.stButton button:hover {
-    filter: brightness(0.97);
-}
-
-/* Metrics */
-[data-testid="metric-container"] {
-    background: #fffaff !important;
-    border: 1px solid #eadffd !important;
-    border-radius: 14px !important;
-}
-
-[data-testid="metric-container"] label,
-[data-testid="metric-container"] div {
-    color: #2d2352 !important;
-    opacity: 1 !important;
-}
-
-/* Alerts / info boxes */
-[data-testid="stAlert"] {
-    color: #2d2352 !important;
-}
-
-/* Tables / dataframe text */
-table, th, td {
-    color: #2d2352 !important;
-}
-
-/* Avoid faded disabled-looking text */
-* {
-    text-shadow: none !important;
-}
-/* Hide Streamlit toolbar */
-[data-testid="stToolbar"],
-[data-testid="stAppDeployButton"] {
-    display: none !important;
-}
+:root{--ink:#2f2747;--muted:#6b627d;--line:#e9e0f5;--lav:#f3edff;--pink:#fff0f6;--accent:#6f52c8;--good:#edf9f1;--warn:#fff8e7}
+html,body,[data-testid="stAppViewContainer"]{background:linear-gradient(135deg,#fffafd 0%,#faf7ff 55%,#f7fbff 100%);color:var(--ink)}
+.block-container{max-width:1180px;padding-top:1.4rem;padding-bottom:5rem}
+h1,h2,h3,h4,h5,h6,p,label,span,div{opacity:1;color:var(--ink)}
+.hero{padding:1.4rem 1.5rem;margin:.2rem 0 1.1rem;border:1px solid var(--line);border-radius:24px;background:linear-gradient(120deg,#fff 0%,#f8f1ff 60%,#fff1f7 100%);box-shadow:0 8px 30px rgba(75,52,120,.06)}
+.hero h1{margin:.15rem 0 .2rem;font-size:2.35rem}.hero p{margin:0;max-width:850px;color:#5c526e;font-size:1.02rem}.eyebrow{font-size:.73rem;letter-spacing:.13em;font-weight:800;color:#775fc4!important}
+.trust{padding:.78rem 1rem;border-radius:14px;margin:.3rem 0 1rem;font-size:.92rem}.trust.good{background:var(--good);border:1px solid #cdebd6}.trust.caution{background:var(--warn);border:1px solid #f1dfaa}
+[data-testid="stCaptionContainer"]{color:var(--muted)!important}small{color:var(--muted)!important}
+[data-testid="stSidebar"]{background:#fbf8ff;border-right:1px solid var(--line)}
+[data-testid="stMetric"]{background:rgba(255,255,255,.92);border:1px solid var(--line);padding:14px 16px;border-radius:16px;box-shadow:0 4px 16px rgba(71,51,110,.04)}
+[data-testid="stMetricLabel"] *{color:#625875!important;font-weight:650!important}[data-testid="stMetricValue"] *{color:#2d2448!important}
+button[data-baseweb="tab"]{color:#514568!important;font-weight:750!important;opacity:1!important;white-space:nowrap}button[data-baseweb="tab"][aria-selected="true"]{color:var(--accent)!important;background:#f2ecff!important;border-radius:11px 11px 0 0}
+.stButton button,.stDownloadButton button{border-radius:12px;font-weight:750;min-height:2.65rem}.stButton button[kind="primary"]{box-shadow:0 5px 16px rgba(111,82,200,.18)}
+[data-testid="stAlert"]{border-radius:14px}div[data-testid="stDataFrame"]{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+[data-testid="stToolbar"],[data-testid="stAppDeployButton"]{display:none!important}
+@media(max-width:768px){.block-container{padding:1rem .7rem 4rem}.hero{padding:1rem;border-radius:18px}.hero h1{font-size:1.8rem}.hero p{font-size:.93rem}.stTabs [data-baseweb="tab-list"]{gap:.2rem;overflow-x:auto;scrollbar-width:none}.stTabs [data-baseweb="tab"]{font-size:.78rem;padding:.45rem .5rem}[data-testid="column"]{min-width:100%!important}.trust{font-size:.84rem}[data-testid="stMetric"]{padding:10px 12px}}
