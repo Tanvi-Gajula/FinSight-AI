@@ -1,20 +1,36 @@
 # FinSight AI
-A learning-first financial research app: **What changed → Why might it have changed → What evidence supports it → What if assumptions change?**
 
-## Main features
-- Historical financial statements from Yahoo Finance/yfinance (provider extraction; not filing-verified)
-- Investigate WHY: deterministic revenue/margin movement calculations
-- Annual-report PDF evidence search with PDF page references
-- Groq explanations grounded in tool outputs
-- Optional simple FCF Valuation Playground; no automatic three-statement forecast
-- Excel valuation download
+FinSight AI is a **learning-first financial research workspace** built around one disciplined flow:
 
-## Run
+**Snapshot → Investigate WHY → Verify evidence → Test valuation assumptions**
+
+## Why it is different
+FinSight does not treat a data-provider ratio, an official company KPI, and an AI explanation as the same thing.
+
+- **Official KPI layer:** curated company-reported metrics override provider-derived headline KPIs when available.
+- **Provider transparency:** Yahoo Finance/yfinance statements stay visible in raw units and are never silently relabelled as crore/billion.
+- **Investigate WHY:** separates numerical movement from evidence-backed business explanation.
+- **Evidence desk:** uploaded annual reports are searchable with PDF page references.
+- **Groq study buddy:** explains tool outputs; Python performs calculations.
+- **Valuation Playground:** transparent FCF scenarios, scenario/sensitivity lenses, and Excel download. It is not an automatic company forecast.
+
+## Currently curated official KPI profiles
+- TCS.NS — FY2025/FY2026
+- INFY.NS — FY2025/FY2026
+
+Other tickers still work for provider-based research, but headline metrics remain explicitly provider-derived until an official profile is curated or evidence is uploaded.
+
+## Run locally
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
 ```
-Optional `.env`: `GROQ_API_KEY=...` (never commit the real key).
+
+Optional `.env`:
+```text
+GROQ_API_KEY=YOUR_KEY_HERE
+```
+Never commit a real key.
 
 ## Important
-FinSight is educational. Provider data, currency/scale, share count, market price and valuation assumptions must be verified before investment use. No buy/sell recommendation is produced.
+FinSight is educational. It does not provide buy/sell recommendations. Financial statements, currency/scale, shares outstanding, market price and valuation assumptions should be independently verified before investment use.
